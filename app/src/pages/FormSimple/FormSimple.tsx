@@ -1,0 +1,1 @@
+import { FormBuilder } from '@haloui/ui'; export default function FormSimple(){ return <FormBuilder fields={[{name:'name',label:'Name'},{name:'role',label:'Role',type:'select',options:[{label:'Viewer',value:'viewer'},{label:'Editor',value:'editor'},{label:'Admin',value:'admin'}]}]} onSubmit={v=>alert(JSON.stringify(v,null,2))}/>;}

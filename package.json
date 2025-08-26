@@ -1,0 +1,8 @@
+{
+  "name": "haloui",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "app"
+  ]
+}

@@ -1,0 +1,1 @@
+import { EmptyState } from '@haloui/ui'; export default function EmptyStatePage(){ return <EmptyState title='No data' description='Try adjusting your filters.' action={<button className='btn primary'>Reload</button>} />; }

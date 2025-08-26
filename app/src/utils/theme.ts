@@ -1,0 +1,1 @@
+export function systemPrefersDark(){return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);} export function toggleTheme(){document.documentElement.classList.toggle('dark');}

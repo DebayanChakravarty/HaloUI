@@ -1,0 +1,1 @@
+import { SettingsPanel } from '@haloui/ui'; export default function Settings(){ return <SettingsPanel sections={[{id:'profile',title:'Profile',content:<div>Profile settings…</div>},{id:'notifications',title:'Notifications',content:<div>Notification toggles…</div>},{id:'security',title:'Security',content:<div>2FA, password…</div>}]} />; }

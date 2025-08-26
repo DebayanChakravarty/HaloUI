@@ -1,0 +1,1 @@
+import { DetailView, DetailGroup } from '@haloui/ui'; const groups:DetailGroup[]=[{title:'Profile',items:[{label:'Name',value:'Alex'},{label:'Role',value:'Admin'}]},{title:'Contact',items:[{label:'Email',value:'alex@example.com'},{label:'Phone',value:'+1 555-0100'}]}]; export default function DetailsPage(){ return <DetailView groups={groups}/>; }

@@ -1,0 +1,1 @@
+export default function Help(){ return (<article className='prose'><h1>Help</h1><p>Use the sidebar to explore components. This demo uses @haloui/ui as a workspace dep.</p></article>); }

@@ -1,0 +1,1 @@
+import { Chart } from '@haloui/ui'; export default function Charts(){ return <Chart title='Traffic over time'>Add a chart lib here (e.g., Recharts)</Chart>; }

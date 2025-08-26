@@ -1,0 +1,1 @@
+import { Wizard } from '@haloui/ui'; export default function WizardCreate(){ return <Wizard steps={[{title:'Step 1: Basics',content:<div>Enter basic info…</div>},{title:'Step 2: Details',content:<div>Enter details…</div>},{title:'Step 3: Review',content:<div>Review and confirm.</div>}]} onFinish={()=>alert('Created!')}/>;}
