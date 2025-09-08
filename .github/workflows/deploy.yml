@@ -1,0 +1,31 @@
+name: Deploy to Hostinger (SFTP)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm install
+      - run: npm --workspace app run build
+
+      - name: SFTP Deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.SSH_HOST }}          # e.g. ssh.yourdomain.com
+          port: ${{ secrets.SSH_PORT || 22 }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}    # OR use ssh-private-key
+          local_path: "app/dist/*"
+          remote_path: "public_html/"              # change if deploying to subdir
+          sftp_only: true
+          delete_remote_files: false               # set true to wipe target before upload (be careful)
