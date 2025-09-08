@@ -1,57 +1,35 @@
-name: Build & Deploy to Hostinger (FTP)
+name: Build & Deploy to Hostinger (SFTP)
 
 on:
   push:
-    branches: [ main ]   # change if needed
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      # Workspace install at ROOT so file: or workspaces both work
-      - name: Install deps (root)
-        run: npm install
-
-      # Build the UI library first (needed if app depends on compiled dist)
-      - name: Build UI library
-        run: npm --workspace packages/ui run build
-
-      # Build the app
-      - name: Build app
-        run: npm --workspace app run build
+      - run: npm install
+      - run: npm --workspace packages/ui run build
+      - run: npm --workspace app run build
 
       - name: List build output
         run: ls -la app/dist && du -sh app/dist || true
 
-      # Upload artifact (optional for debugging)
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: SFTP Deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          name: app-dist
-          path: app/dist
-
-      # Deploy to Hostinger via FTP
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4
-        with:
-          server: ${{ secrets.FTP_HOST }}          # e.g. ftp.yourdomain.com
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          local-dir: app/dist/
-          server-dir: public_html/                 # or domains/<subdomain>/public_html/
-          exclude: |
-            **/.git*
-            **/.github/**
-            **/node_modules/**
-            **/*.map
+          server: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}     # or use ssh-private-key with rsync
+          local_path: "app/dist/*"
+          remote_path: "public_html/"               # or domains/<sub>/public_html/
+          sftp_only: true
+          delete_remote_files: false
