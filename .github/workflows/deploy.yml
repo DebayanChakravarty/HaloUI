@@ -67,7 +67,7 @@ jobs:
 
           local_path: "app/dist/*"
           # subdomain document root on Hostinger:
-           remote_path: "public_html/"
+          remote_path: "public_html/"
 
           sftp_only: true
           delete_remote_files: true
