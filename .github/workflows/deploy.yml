@@ -1,4 +1,5 @@
 name: deploy-haloui-to-hostinger-sftp
+
 on:
   push:
     branches: [ main ]
@@ -19,15 +20,17 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
+      # Build UI lib first if your app imports @haloui/ui
       - name: Build UI lib
         run: |
           if [ -d "packages/ui" ]; then
-            npm --workspace packages/ui run build || echo "ui build skipped"
+            npm --workspace packages/ui run build
           fi
 
       - name: Build app
         run: npm --workspace app run build
 
+      # Add SPA routing file next to index.html
       - name: Ensure .htaccess (SPA)
         run: |
           cat > app/dist/.htaccess << 'EOF'
@@ -40,31 +43,45 @@ jobs:
           RewriteRule . /index.html [L]
           EOF
 
-      # 1) (optional) sanity: show current server dirs
-      - name: SSH list target dir (sanity)
+      # 🔍 Sanity checks
+      - name: List build output
+        run: |
+          ls -la app/dist || true
+          echo "File count:" $(find app/dist -type f | wc -l)
+
+      # ❗ Fail early if dist is empty
+      - name: Ensure dist is not empty
+        run: |
+          COUNT=$(find app/dist -type f | wc -l)
+          if [ "$COUNT" -eq 0 ]; then
+            echo "app/dist is empty. Build likely failed or output path is wrong."
+            exit 1
+          fi
+
+      # Create public_html if needed
+      - name: Create public_html (SSH)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}   # or use key: 'key: ${{ secrets.SSH_PRIVATE_KEY }}'
           port:     ${{ secrets.SSH_PORT || 22 }}
+          password: ${{ secrets.SSH_PASSWORD }}  # or use ssh-private-key
           script: |
-            pwd
-            ls -la
-            # create the subdomain dir if missing (adjust ONE of these)
-            mkdir -p domains/haloui.bydeb.in/public_html
-            # mkdir -p public_html
+            mkdir -p public_html
+            ls -ld public_html
 
-      # 2) SFTP upload to an existing directory (NO * at the end)
+      # 🚀 SFTP deploy (NOTE: local_path is a directory, no wildcard)
       - name: SFTP Deploy
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server:     ${{ secrets.SSH_HOST }}
           port:       ${{ secrets.SSH_PORT || 22 }}
           username:   ${{ secrets.SSH_USERNAME }}
-          password:   ${{ secrets.SSH_PASSWORD }}   # or: ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          local_path: "app/dist/*"
-          remote_path: "public_html/"   # or "public_html/"
+          password:   ${{ secrets.SSH_PASSWORD }}     # or: ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          local_path: "app/dist/"                      # <-- directory (no *)
+          remote_path: "public_html/"                  # main domain root
+
           sftp_only: true
           delete_remote_files: true
           exclude: ".git*,node_modules,*.map,.DS_Store"
