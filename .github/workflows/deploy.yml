@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: 'npm'
@@ -67,7 +67,7 @@ jobs:
 
           local_path: "app/dist/*"
           # subdomain document root on Hostinger:
-          remote_path: "public_html/"
+          remote_path: "/public_html/"
 
           sftp_only: true
           delete_remote_files: true
