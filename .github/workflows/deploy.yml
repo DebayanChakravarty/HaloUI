@@ -1,45 +1,34 @@
 name: deploy-haloui-to-hostinger-sftp
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      # Install once at monorepo root
-      - name: Install dependencies (root)
+      - name: Install deps (root)
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-      # Build the UI lib first (if app imports @haloui/ui)
-      - name: Build UI library (@haloui/ui)
+      - name: Build UI lib
         run: |
           if [ -d "packages/ui" ]; then
             npm --workspace packages/ui run build || echo "ui build skipped"
           fi
 
-      # Build the React app (outputs to app/dist/)
-      - name: Build HaloUI app
+      - name: Build app
         run: npm --workspace app run build
 
-      # Ensure SPA routing on Hostinger
-      - name: Ensure .htaccess (SPA routing)
+      - name: Ensure .htaccess (SPA)
         run: |
           cat > app/dist/.htaccess << 'EOF'
           Options -MultiViews
@@ -51,24 +40,31 @@ jobs:
           RewriteRule . /index.html [L]
           EOF
 
-      - name: List build output
-        run: ls -la app/dist && du -sh app/dist || true
+      # 1) (optional) sanity: show current server dirs
+      - name: SSH list target dir (sanity)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}   # or use key: 'key: ${{ secrets.SSH_PRIVATE_KEY }}'
+          port:     ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            pwd
+            ls -la
+            # create the subdomain dir if missing (adjust ONE of these)
+            mkdir -p domains/haloui.bydeb.in/public_html
+            # mkdir -p public_html
 
-      # ---- SFTP DEPLOY (SSH, port 22) ----
+      # 2) SFTP upload to an existing directory (NO * at the end)
       - name: SFTP Deploy
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server:     ${{ secrets.SSH_HOST }}              # haloui.bydeb.in (NO https://)
-          port:       ${{ secrets.SSH_PORT }}              # 22
+          server:     ${{ secrets.SSH_HOST }}
+          port:       ${{ secrets.SSH_PORT || 22 }}
           username:   ${{ secrets.SSH_USERNAME }}
-          # use ONE of the following:
-          password:   ${{ secrets.SSH_PASSWORD }}
-          # ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+          password:   ${{ secrets.SSH_PASSWORD }}   # or: ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           local_path: "app/dist/*"
-          # subdomain document root on Hostinger:
-          remote_path: "public_html/*"
-
+          remote_path: "domains/haloui.bydeb.in/public_html/"   # or "public_html/"
           sftp_only: true
           delete_remote_files: true
           exclude: ".git*,node_modules,*.map,.DS_Store"
