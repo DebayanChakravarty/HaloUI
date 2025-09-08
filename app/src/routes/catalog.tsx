@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 const Dashboard = lazy(()=>import("@pages/Dashboard/Dashboard"));
+const RegistrationViewPage = lazy(()=>import("@pages/Registration/RegistrationView")); 
 const CardViewPage = lazy(()=>import("@pages/CardView/CardView"));
 const TableBasic = lazy(()=>import("@pages/TableBasic/TableBasic"));
 const TableWithFilters = lazy(()=>import("@pages/TableWithFilters/TableWithFilters"));
@@ -16,6 +17,7 @@ export type NavItem = { text:string; href:string; children?: NavItem[] };
 export const nav: NavItem[] = [
   { text: "Dashboard", href: "/" },
   { text: "Browse", href: "#", children: [
+    { text: "Registration view", href: "/registration-view" },
     { text: "Card view", href: "/card-view" },
     { text: "Table (basic)", href: "/table-basic" },
     { text: "Table + Filters", href: "/table-filters" },
@@ -34,6 +36,7 @@ export const nav: NavItem[] = [
 ];
 export const routes: RouteObject[] = [
   { index: true, element: <Dashboard /> },
+  { path: "registration-view", element: <RegistrationViewPage /> },
   { path: "card-view", element: <CardViewPage /> },
   { path: "table-basic", element: <TableBasic /> },
   { path: "table-filters", element: <TableWithFilters /> },

@@ -6,3 +6,4 @@ export * from "./src/Wizard/Wizard";
 export * from "./src/Chart/Chart";
 export * from "./src/EmptyState/EmptyState";
 export * from "./src/SettingsPanel/SettingsPanel";
+export * from "./src/Registration/RegistrationView";
