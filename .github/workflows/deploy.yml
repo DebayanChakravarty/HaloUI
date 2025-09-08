@@ -1,4 +1,4 @@
-name: deploy-haloui-to-hostinger-ftp
+name: deploy-haloui-to-hostinger-sftp
 
 on:
   push:
@@ -20,27 +20,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      # Install at the monorepo root so app + packages share node_modules
+      # Install once at monorepo root
       - name: Install dependencies (root)
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-      # If app depends on @haloui/ui (workspace/file link), build the lib first
+      # Build the UI lib first (if app imports @haloui/ui)
       - name: Build UI library (@haloui/ui)
         run: |
           if [ -d "packages/ui" ]; then
             npm --workspace packages/ui run build || echo "ui build skipped"
           fi
 
-      # Build the React app in /app (Webpack)
+      # Build the React app (outputs to app/dist/)
       - name: Build HaloUI app
         run: npm --workspace app run build
 
-      # Ensure SPA routing on Hostinger (place next to index.html)
+      # Ensure SPA routing on Hostinger
       - name: Ensure .htaccess (SPA routing)
         run: |
-          mkdir -p app/dist
           cat > app/dist/.htaccess << 'EOF'
           Options -MultiViews
           RewriteEngine On
@@ -51,24 +51,24 @@ jobs:
           RewriteRule . /index.html [L]
           EOF
 
-      # (Optional) List output for debugging
       - name: List build output
         run: ls -la app/dist && du -sh app/dist || true
 
-      # Deploy via FTP to Hostinger (same action/version & secret names as your Angular example)
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      # ---- SFTP DEPLOY (SSH, port 22) ----
+      - name: SFTP Deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          protocol: ftp
-          server:   ${{ secrets.SSH_HOST }}     # e.g. ftp.yourdomain.com
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port:     ${{ secrets.SSH_PORT }}     # usually 21
-          local-dir:  app/dist/                    # <-- HaloUI app build output
-          server-dir: /public_html/                # or /domains/<sub.yourdomain.com>/public_html/
-          dangerous-clean-slate: true
-          exclude: |
-            **/*.map
-            **/node_modules/**
-            **/.git**
-            **/.DS_Store
+          server:     ${{ secrets.SSH_HOST }}              # haloui.bydeb.in (NO https://)
+          port:       ${{ secrets.SSH_PORT }}              # 22
+          username:   ${{ secrets.SSH_USERNAME }}
+          # use ONE of the following:
+          password:   ${{ secrets.SSH_PASSWORD }}
+          # ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          local_path: "app/dist/*"
+          # subdomain document root on Hostinger:
+          remote_path: "domains/haloui.bydeb.in/public_html/"
+
+          sftp_only: true
+          delete_remote_files: true
+          exclude: ".git*,node_modules,*.map,.DS_Store"
