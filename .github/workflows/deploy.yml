@@ -64,7 +64,7 @@ jobs:
           username:   ${{ secrets.SSH_USERNAME }}
           password:   ${{ secrets.SSH_PASSWORD }}   # or: ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           local_path: "app/dist/*"
-          remote_path: "domains/haloui.bydeb.in/public_html/"   # or "public_html/"
+          remote_path: "public_html/"   # or "public_html/"
           sftp_only: true
           delete_remote_files: true
           exclude: ".git*,node_modules,*.map,.DS_Store"
